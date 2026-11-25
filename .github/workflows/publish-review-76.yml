@@ -1,0 +1,46 @@
+name: Publish isolated review 7.6
+on:
+  push:
+    branches: ['release/preview-7.6']
+permissions:
+  contents: read
+concurrency:
+  group: atelier23-pages
+  cancel-in-progress: false
+jobs:
+  package:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - name: Preserve production and pin approved review bytes
+        shell: bash
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse origin/main)" = "b6a1d084c07ceef0ce8f7600805b7678c3453a39"
+          mkdir -p _site/preview-7.6
+          for f in index.html gentleman-hero.webp chapter-01-desire.webp chapter-02-search.webp chapter-03-fitting.webp; do
+            test "$(git hash-object "$f")" = "$(git rev-parse b6a1d084c07ceef0ce8f7600805b7678c3453a39:"$f")"
+            test "$(git hash-object "preview-7.6/$f")" = "$(git rev-parse bf0f0e084b5a9419d15212d6bcc3e45d9f53da7d:"$f")"
+            cp "$f" _site/
+            cp "preview-7.6/$f" _site/preview-7.6/
+          done
+          cp .nojekyll _site/
+      - uses: actions/upload-pages-artifact@v4
+        with:
+          path: _site
+  deploy:
+    needs: package
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      pages: write
+      id-token: write
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - uses: actions/configure-pages@v5
+      - uses: actions/deploy-pages@v4
+        id: deployment
