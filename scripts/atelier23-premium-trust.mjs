@@ -35,7 +35,7 @@ for(const width of [390,1280]){
  assert.equal(await page.locator("#search img").count(),8);
  assert.deepEqual(errors,[]);
  await context.close();
- const staticContext=await browser.newContext({javaScriptEnabled:false,viewport:{width,height:900}});
+ const staticContext=await browser.newContext({javaScriptEnabled:false,viewport:{width,height:900},reducedMotion:"reduce"});
  const p=await staticContext.newPage();await p.goto(url);
  for(const card of await p.locator("details[data-ea]").all()){await card.locator("summary").click();assert.ok(await card.locator(".ea-metric").isVisible());}
  assert.ok(await p.locator("#guided-reset").isHidden());assert.ok(await p.locator("#album-track").isHidden());
@@ -47,7 +47,7 @@ for(const width of [390,1280]){
  assert.ok(await p.locator("#manual-brief").isEditable());await p.locator("#manual-brief").fill("Лиссабон. Поиск. Когда удобно созвониться?");
  assert.ok(await p.locator("#growth-copy").isHidden());
  assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
- await p.locator("#next-step").screenshot({path:`artifacts/audit-mobile/${engine}-${width}-no-js-pilot.png`});
+ await p.locator("#manual-brief").scrollIntoViewIfNeeded();await p.screenshot({path:`artifacts/audit-mobile/${engine}-${width}-no-js-pilot.png`});
  await staticContext.close();
  console.log(`PASS Premium Trust ${engine} ${width}: context, CTA, clipboard denial, reset, six native images, no-JS navigation and manual draft`);
 }
