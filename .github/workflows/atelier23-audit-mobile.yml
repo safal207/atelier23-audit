@@ -31,6 +31,11 @@ jobs:
         env:
           HOME: /root
           AUDIT_BROWSER: ${{ matrix.browser }}
+      - name: Premium Trust and no-JS QA
+        run: node scripts/atelier23-premium-trust.mjs
+        env:
+          HOME: /root
+          AUDIT_BROWSER: ${{ matrix.browser }}
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -53,6 +58,10 @@ jobs:
           AUDIT_APPLE: "1"
       - name: Emotional audit WebKit QA
         run: node scripts/atelier23-emotional-audit.mjs
+        env:
+          AUDIT_BROWSER: webkit
+      - name: Premium Trust WebKit QA
+        run: node scripts/atelier23-premium-trust.mjs
         env:
           AUDIT_BROWSER: webkit
       - uses: actions/upload-artifact@v4
