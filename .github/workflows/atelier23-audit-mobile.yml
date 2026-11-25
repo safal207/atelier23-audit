@@ -1,7 +1,7 @@
 name: Atelier 23 audit mobile QA
 on:
   push:
-    branches: [main]
+    branches: [main, 'audit/premium-trust-7.3']
 permissions:
   contents: read
 jobs:

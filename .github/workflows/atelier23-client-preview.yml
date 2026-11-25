@@ -1,7 +1,7 @@
 name: Atelier 23 client readiness preview
 on:
   push:
-    branches: [main]
+    branches: [main, 'audit/premium-trust-7.3']
 permissions:
   contents: read
 jobs:
