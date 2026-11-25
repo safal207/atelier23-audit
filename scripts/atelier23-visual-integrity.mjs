@@ -11,6 +11,7 @@ const lum=rgb=>rgb.map(x=>x/255).map(x=>x<=.04045?x/12.92:((x+.055)/1.055)**2.4)
 const parse=s=>{const a=s.match(/[\d.]+/g).map(Number);assert.ok(a.length===3||a[3]===1,'expected opaque color '+s);return a.slice(0,3)};
 const ratio=(a,b)=>{const x=lum(parse(a)),y=lum(parse(b));return (Math.max(x,y)+.05)/(Math.min(x,y)+.05)};
 const report=[];
+const axeFailures=[];
 // Use viewport-bounded captures to avoid Chromium allocating a raster of the long evidence document.
 async function capture(page,locator,path){
  await locator.evaluate(el=>el.scrollIntoView({block:'center',behavior:'instant'}));
@@ -45,7 +46,8 @@ for(const width of [320,390,1280]){
    assert.ok(focus.visible&&focus.style==='solid'&&focus.width>=2&&ratio(focus.color,fixed.background)>=3,JSON.stringify(focus));
  }
  assert.ok(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1));
- report.push({width,previous,ratios});console.log('PASS Visual Integrity '+engine+' '+width+'px: min ratio '+Math.min(...ratios.map(r=>r.ratio)).toFixed(2)+', negative control, focus, unaffected chapter');
+ const legend=await page.locator('.sharelegend > div:nth-child(2) > b').evaluate(el=>{let p=el;while(p&&getComputedStyle(p).backgroundColor==='rgba(0, 0, 0, 0)')p=p.parentElement;return {fg:getComputedStyle(el).color,bg:getComputedStyle(p).backgroundColor}});assert.ok(ratio(legend.fg,legend.bg)>=4.5,'metadata legend contrast');
+ report.push({width,previous,ratios,legendRatio:ratio(legend.fg,legend.bg)});console.log('PASS Visual Integrity '+engine+' '+width+'px: min ratio '+Math.min(...ratios.map(r=>r.ratio)).toFixed(2)+', negative control, focus, unaffected chapter');
  await page.close();
 }
 const nojs=await browser.newPage({javaScriptEnabled:false,viewport:{width:390,height:850}});
@@ -55,9 +57,9 @@ await writeFile(out+'/'+engine+'-contrast.json',JSON.stringify(report,null,2));
 if(engine==='chromium'){
  const p=await browser.newPage({viewport:{width:390,height:900}});await p.goto(url);
  await p.addScriptTag({path:resolve('node_modules/axe-core/axe.min.js')});
- const audit=async label=>{const r=await p.evaluate(async()=>window.axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']},resultTypes:['violations','incomplete']}).then(r=>({violations:r.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.map(n=>({target:n.target,failureSummary:n.failureSummary}))})),incomplete:r.incomplete.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,failureSummary:n.failureSummary}))})),passes:r.passes.map(v=>v.id)})));await writeFile(out+'/axe-'+label+'.json',JSON.stringify(r,null,2));console.log('AXE '+label+' violations '+JSON.stringify(r.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.length}))));};
+ const audit=async label=>{const r=await p.evaluate(async()=>window.axe.run(document,{runOnly:{type:'tag',values:['wcag2a','wcag2aa','wcag21a','wcag21aa','wcag22aa']},resultTypes:['violations','incomplete']}).then(r=>({violations:r.violations.map(v=>({id:v.id,impact:v.impact,help:v.help,nodes:v.nodes.map(n=>({target:n.target,failureSummary:n.failureSummary}))})),incomplete:r.incomplete.map(v=>({id:v.id,nodes:v.nodes.map(n=>({target:n.target,failureSummary:n.failureSummary}))})),passes:r.passes.map(v=>v.id)})));await writeFile(out+'/axe-'+label+'.json',JSON.stringify(r,null,2));axeFailures.push(...r.violations.map(v=>({label,id:v.id,nodes:v.nodes})));console.log('AXE '+label+' violations '+JSON.stringify(r.violations.map(v=>({id:v.id,impact:v.impact,nodes:v.nodes.length}))));};
  await audit('initial');
  for(const s of await p.locator('details[data-ea] summary').all())await s.click();
- await audit('expanded');await p.close();
+ await audit('expanded');await p.close();assert.deepEqual(axeFailures,[],'automated WCAG violations');
 }
 }finally{await browser.close()}
