@@ -1,0 +1,27 @@
+name: Authenticity 7.8 comparative QA
+on:
+  push:
+    branches: ['audit/authenticity-7.8']
+permissions:
+  contents: read
+jobs:
+  compare:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Build both versions
+        run: |
+          python3 scripts/build-author-77.py _compare/preview-7.7
+          python3 scripts/build-author-78.py _compare/preview-7.8
+      - name: Comparative browser QA
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory _compare >/tmp/compare.log 2>&1 &
+          node scripts/author-78-qa.mjs
+      - uses: actions/upload-artifact@v4
+        with:
+          name: authenticity-78-comparison
+          path: |
+            author-*.png
+            _compare/preview-7.8/

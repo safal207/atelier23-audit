@@ -28,6 +28,7 @@ jobs:
           done
           cp .nojekyll _site/
           python3 scripts/build-author-77.py _site/preview-7.7
+          python3 scripts/build-author-78.py _site/preview-7.8
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
