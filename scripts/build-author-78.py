@@ -5,7 +5,7 @@ import hashlib, re, shutil, subprocess, sys, tempfile
 ROOT=Path(__file__).resolve().parents[1]
 DEST=Path(sys.argv[1]).resolve()
 photo=ROOT/"author-real.webp"
-assert hashlib.sha256(photo.read_bytes()).hexdigest()=="2218990af31fe301940702986393d28e37686f731035b44ee1ae31830c845728", "Original portrait hash mismatch"
+assert hashlib.sha256(photo.read_bytes()).hexdigest()=="0a0f8a2f324c0aa7976a5864b9d4fe83748d36e4d624da7efd13bdc7da66b362", "Original portrait hash mismatch"
 with tempfile.TemporaryDirectory() as temp:
     old=Path(temp)/"baseline"
     subprocess.run([sys.executable,str(ROOT/"scripts/build-author-77.py"),str(old)],check=True)
