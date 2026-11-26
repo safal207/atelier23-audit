@@ -29,6 +29,7 @@ for(const width of [320,390,1280]){
     await p.locator('#growth-copy').click();
     assert.equal(await p.evaluate(()=>navigator.clipboard.readText()),brief);
     await p.locator('#album-next').click();
+    await p.waitForFunction(()=>/2\s*\/\s*6|2\s*из\s*6/.test(document.querySelector('#album-counter')?.textContent||''),null,{timeout:5000});
     assert.match(await p.locator('#album-counter').innerText(),/2\s*\/\s*6|2\s*из\s*6/);
    }else{assert.ok(await p.locator('#manual-brief').isVisible());assert.ok(await p.locator('.static-guided').isVisible())}
    await p.locator('#audit-author').scrollIntoViewIfNeeded();
