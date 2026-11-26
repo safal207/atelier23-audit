@@ -27,6 +27,7 @@ jobs:
             cp "preview-7.6/$f" _site/preview-7.6/
           done
           cp .nojekyll _site/
+          python3 scripts/build-author-77.py _site/preview-7.7
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site

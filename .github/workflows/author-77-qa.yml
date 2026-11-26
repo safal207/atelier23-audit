@@ -1,0 +1,34 @@
+name: Author preview 7.7 QA
+on:
+  push:
+    branches: ['audit/author-7.7']
+    paths: ['author-portraits-7.7.zip','scripts/build-author-77.py','scripts/author-77-qa.mjs','.github/workflows/author-77-qa.yml']
+permissions:
+  contents: read
+jobs:
+  test:
+    if: ${{ github.event.head_commit != null }}
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Check whether portraits are present
+        id: portraits
+        run: |
+          if test -f author-portraits-7.7.zip; then echo "ready=true" >> "$GITHUB_OUTPUT"; else echo "ready=false" >> "$GITHUB_OUTPUT"; fi
+      - name: Build and validate pinned portraits
+        if: steps.portraits.outputs.ready == 'true'
+        run: python3 scripts/build-author-77.py _author-review
+      - name: Browser QA
+        if: steps.portraits.outputs.ready == 'true'
+        run: |
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory _author-review > /tmp/author-http.log 2>&1 &
+          node scripts/author-77-qa.mjs
+      - uses: actions/upload-artifact@v4
+        if: steps.portraits.outputs.ready == 'true'
+        with:
+          name: author-77-qa
+          path: |
+            author-*.png
+            _author-review/
