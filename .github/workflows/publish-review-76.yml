@@ -29,6 +29,24 @@ jobs:
           cp .nojekyll _site/
           python3 scripts/build-author-77.py _site/preview-7.7
           python3 scripts/build-author-78.py _site/preview-7.8
+      - name: Verify both versions before replacing the existing client URL
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm install --no-save playwright
+          npx playwright install --with-deps chromium
+          python3 -m http.server 8765 --bind 127.0.0.1 --directory _site >/tmp/compare.log 2>&1 &
+          server=$!
+          trap 'kill "$server" 2>/dev/null || true' EXIT
+          for i in {1..30}; do
+            if curl -fsS http://127.0.0.1:8765/preview-7.7/ >/dev/null; then break; fi
+            sleep 1
+          done
+          node scripts/author-78-qa.mjs
+          mv _site/preview-7.7 _site/preview-7.7-original
+          cp -a _site/preview-7.8 _site/preview-7.7
+          diff -qr _site/preview-7.8 _site/preview-7.7
+          test -f _site/preview-7.7-original/index.html
       - uses: actions/upload-pages-artifact@v4
         with:
           path: _site
