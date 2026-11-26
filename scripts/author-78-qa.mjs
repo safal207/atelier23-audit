@@ -12,10 +12,15 @@ for(const width of [320,390,1280]){
    await p.goto('http://127.0.0.1:8765/preview-'+ver+'/',{waitUntil:'load'});
    await p.locator('#audit-author').scrollIntoViewIfNeeded();
    const photos=p.locator('img[src^="author-"],img[src^="chapter-"],img[src^="gentleman-"]');
-   const count=await photos.count();assert.equal(count,ver==='7.7'?8:1);
+   const count=await photos.count();assert.equal(count,ver==='7.7'?8:5);
    for(const img of await photos.all()){await img.scrollIntoViewIfNeeded();await img.evaluate(async e=>{await e.decode();if(!e.naturalWidth)throw Error('image failed')})}
    assert.ok(await p.evaluate(()=>document.documentElement.scrollWidth<=innerWidth+1),'overflow '+ver);
-   if(ver==='7.8'){assert.equal(await p.locator('#audit-author img, img[src^="author-"], #author-gallery').count(),0);assert.ok(await p.locator('#audit-author').innerText().then(t=>t.includes('результаты проверок и скриншоты')));assert.equal((await context.request.get('http://127.0.0.1:8765/preview-7.8/author-real.webp')).status(),404)}
+   if(ver==='7.8'){
+    assert.deepEqual(await p.locator('img[src^="author-"]').evaluateAll(imgs=>imgs.map(i=>i.getAttribute('src'))),['author-main.webp','author-method.webp','author-chair.webp','author-standing.webp']);
+    assert.equal(await p.locator('#author-gallery img').count(),2);
+    assert.ok(await p.locator('#audit-author').innerText().then(t=>t.includes('не являются доказательствами проверок')));
+    assert.equal((await context.request.get('http://127.0.0.1:8765/preview-7.8/author-real.webp')).status(),404);
+   }
    if(enabled){
     await p.locator('#guided-reset').click();
     await p.locator('#guided-options').getByRole('button',{name:'Лиссабон',exact:true}).click();
